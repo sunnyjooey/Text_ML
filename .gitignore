@@ -1,0 +1,13 @@
+# Folders
+data_processing/.ipynb_checkpoints/*
+data_processing/data/svo_df.pkl
+feature_gen/.ipynb_checkpoints/*
+feature_gen/data/*
+__practice_code__/*
+__pycache__/*
+.ipynb_checkpoints/*
+
+# General
+*.csv
+*.pkl
+Untitled.ipynb
