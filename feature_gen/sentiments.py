@@ -24,8 +24,9 @@ def get_svo_sentiments(df, lex, label_col, window, count_thresh):
             svo_sentiments[key][label] = {}
        
         # all svos for one label
-        label_svos = df[df[label_col] == label].reset_index()
-        for i in range(label_svos.shape[0]):
+        label_svos = df[df[label_col] == label]
+        indices = label_svos.index 
+        for i in indices:
             user_svo_list = label_svos.loc[i,'svos']
             for tweet_svo_list in user_svo_list:
                 for svo in tweet_svo_list:
@@ -97,41 +98,44 @@ def get_svo_sentiments(df, lex, label_col, window, count_thresh):
                                     continue
     
     # get average sentiment (if count above threshold) per label, per word 
-    sentiments = {
+    sentiments_dict = {
         'subject': {},
         'object': {}
     }
     for label in labels:
-        for key in sentiments.keys():
-            sentiments[key][label] = {}
+        for key in sentiments_dict.keys():
+            sentiments_dict[key][label] = {}
             
     for sv in svo_sentiments.keys():
         for label_key in svo_sentiments[sv]:
             for word_key in svo_sentiments[sv][label_key]:
                 if svo_sentiments[sv][label_key][word_key]['count'] >= count_thresh:
-                    sentiments[sv][label_key][word_key] = svo_sentiments[sv][label_key][word_key]['total_sentim'] / svo_sentiments[sv][label_key][word_key]['count']
+                    sentiments_dict[sv][label_key][word_key] = svo_sentiments[sv][label_key][word_key]['total_sentim'] / svo_sentiments[sv][label_key][word_key]['count']
 
-    return sentiments
+    return sentiments_dict
 
 
-def most_pos_neg_sents(sent_dict, k):
+def most_pos_neg_sents(df, label_col, lex, window, count_thresh, k):
     """
-    Given sentiments dictionary (from `svo_sentiments` function),
-    return dictionary of the k most positive subjects, k most positive objects,
+    Creates sentiment dictionary of all sub/obj words in df (from `get_svo_sentiments` function),
+    and returns a dictionary of the k most positive subjects, k most positive objects,
     k most negative subjects, k most negative objects for EACH label 
-    (currently only works for the 2 label case). Word that are pos/neg in both labels
-    will be discluded.
+    (= 2*2*2*k, currently only works for the 2 label case). Words that are pos/neg in both labels
+    will be discluded. Words appearing less than count_thresh times will be discluded.
     """
+    # Get sentiments for all words in text
+    sentiments_dict = get_svo_sentiments(df, lex, label_col, window, count_thresh)
+
     k_sentiment_dict = {}
     # for subject/object
-    for sv in sent_dict.keys():
+    for sv in sentiments_dict.keys():
         # for each label
-        for label in sent_dict[sv].keys():
+        for label in sentiments_dict[sv].keys():
             if label not in k_sentiment_dict:
                 k_sentiment_dict[label] = {}
             
             # sort words by sentiment value
-            sorted_list = sorted(sent_dict[sv][label].items(), key=operator.itemgetter(1))
+            sorted_list = sorted(sentiments_dict[sv][label].items(), key=operator.itemgetter(1))
             sorted_list.reverse()
             
             # get k most positive
@@ -154,7 +158,7 @@ def most_pos_neg_sents(sent_dict, k):
     labels = list(k_sentiment_dict.keys())
     sentiments = ['POSITIVE', 'NEGATIVE']
     
-    separate_sentiment = {}
+   sent_dict = {}
     for sentiment in sentiments: 
         label1_pos_words = k_sentiment_dict[labels[0]][sentiment]
         label2_pos_words = k_sentiment_dict[labels[1]][sentiment]
@@ -163,38 +167,29 @@ def most_pos_neg_sents(sent_dict, k):
         # words that have the same sentiment in both labels -- to be discluded
         common_pos = [word for word in label1_pos_words if word in label2_pos_words]
 
-        if labels[0] not in separate_sentiment:
-            separate_sentiment[labels[0]] = {}
-        separate_sentiment[labels[0]][sentiment] = label1_pos_unique
-        if labels[1] not in separate_sentiment:
-            separate_sentiment[labels[1]] = {}
-        separate_sentiment[labels[1]][sentiment] = label2_pos_unique
-        separate_sentiment[sentiment + '_COMMON'] = common_pos   
+        if labels[0] not in sent_dict:
+            sent_dict[labels[0]] = {}
+        sent_dict[labels[0]][sentiment] = label1_pos_unique
+        if labels[1] not in sent_dict:
+            sent_dict[labels[1]] = {}
+        sent_dict[labels[1]][sentiment] = label2_pos_unique
+        sent_dict[sentiment + '_COMMON'] = common_pos   
         
-    return separate_sentiment
+    return sent_dict
 
 
-def featurize_sentiments(df, label_col, tok_text_col, lex, window, count_thresh, k, sent_dict=None):
+def featurize_sentiments(df, label_col, tok_text_col, sent_dict, lex, window):
     """
     Featurize most positive/negative subject/object words in each label
     Value is the average sentiment of the `window` number of words before
     and after each sentiment-laden word
     Inputs:
         tok_text_col: list of lists, each inner list is a tokenized tweet
+        sent_dict: sentiment dictionary produced from `most_pos_neg_sents` function
         lex: sentiment lexicon, dictionary of word-key, sentiment-val
         window: window of words to consider
-        count_thresh: drop words appearing less than threshold times
-        k: top k sentiment laden words for each pos/neg sentiment, sub/obj pos, and label (= 2*2*2*k )
-        sent_dict: for the test set only -- pass in sent_dict produced from the training set 
-                    for training set, keep as None
-    Output: featurized dataframe, sent_dict (if produced from training set, use for testing set)
-    """
-    if not sent_dict:
-        # Get sentiments for all words in text
-        all_sent_dict = get_svo_sentiments(df, lex, label_col, window, count_thresh)
-        # Training - get most sentiment-laden words
-        sent_dict = most_pos_neg_sents(all_sent_dict, k)
-    
+    Output: featurized dataframe
+    """   
     # Featurize
     labels = df[label_col].unique()
     pos_neg = ['NEGATIVE', 'POSITIVE']
@@ -204,7 +199,8 @@ def featurize_sentiments(df, label_col, tok_text_col, lex, window, count_thresh,
             
             # feature words for one label (dem/rep), one sentiment type (positive/negative)
             sent_features = sent_dict[label][pn]
-            for i in range(df.shape[0]):
+            indices = df.index
+            for i in indices:
                 tokenized_text_lists = df.loc[i,tok_text_col]
                 i_sent_dict = {}
                 for tokenized_text in tokenized_text_lists:
@@ -249,4 +245,4 @@ def featurize_sentiments(df, label_col, tok_text_col, lex, window, count_thresh,
                 
     df.fillna(0, inplace=True)
     
-    return df, sent_dict
+    return df

@@ -59,8 +59,9 @@ class protoWords():
             self._word_count_dict[label] = {}
             
             # all text and user_ids for one label
-            texts_ids = df[df[label_col] == label][[text_col, user_id]].reset_index()
-            for i in range(texts_ids.shape[0]):
+            texts_ids = df[df[label_col] == label][[text_col, user_id]]
+            indices = texts_ids.index
+            for i in indices:
                 words = tknzr.tokenize(texts_ids.loc[i, text_col])
                 # build word count dict
                 for word in words:
@@ -165,8 +166,9 @@ class protoHashtags():
             self._ht_count_dict[label] = {}
 
             # all htags and user_ids for one label
-            ht_ids = df[df[label_col] == label][[ht_col, user_id]].reset_index()
-            for i in range(ht_ids.shape[0]):
+            ht_ids = df[df[label_col] == label][[ht_col, user_id]]
+            indices = ht_ids.index
+            for i in indices:
                 htags = ht_ids.loc[i, ht_col]
 
                 # build ht count dict
@@ -300,3 +302,4 @@ def create_protohashtag_features(df, proto_hash_obj, ht_col, user_id, k, thresh)
     feature_df.reset_index(inplace=True)
     feature_df.rename(columns={'index': 'user_id'}, inplace=True)
     return feature_df
+
