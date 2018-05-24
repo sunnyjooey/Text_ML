@@ -80,7 +80,7 @@ def topic_model(df, text_col, user_id, num_topic, max_df, min_df, max_feature, s
                                           alpha=alpha, eta=eta, random_state=random_number)
     topicsDict = {}
     for topicNum in range(lda.num_topics):
-        topicWords = [w for w in lda.show_topic(topicNum, topn=20)]
+        topicWords = [w for w in lda.show_topic(topicNum, topn=50)]
         topicsDict['Topic_{}'.format(topicNum)] = topicWords
     wordRanksDF = pd.DataFrame(topicsDict)
     return TFVectorizer, dictionary, lda, wordRanksDF

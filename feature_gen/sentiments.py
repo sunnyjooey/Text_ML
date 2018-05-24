@@ -158,7 +158,7 @@ def most_pos_neg_sents(df, label_col, lex, window, count_thresh, k):
     labels = list(k_sentiment_dict.keys())
     sentiments = ['POSITIVE', 'NEGATIVE']
     
-   sent_dict = {}
+    sent_dict = {}
     for sentiment in sentiments: 
         label1_pos_words = k_sentiment_dict[labels[0]][sentiment]
         label2_pos_words = k_sentiment_dict[labels[1]][sentiment]
@@ -178,7 +178,7 @@ def most_pos_neg_sents(df, label_col, lex, window, count_thresh, k):
     return sent_dict
 
 
-def featurize_sentiments(df, label_col, tok_text_col, sent_dict, lex, window):
+def featurize_sentiments(df, label_list, tok_text_col, sent_dict, lex, window):
     """
     Featurize most positive/negative subject/object words in each label
     Value is the average sentiment of the `window` number of words before
@@ -191,10 +191,9 @@ def featurize_sentiments(df, label_col, tok_text_col, sent_dict, lex, window):
     Output: featurized dataframe
     """   
     # Featurize
-    labels = df[label_col].unique()
     pos_neg = ['NEGATIVE', 'POSITIVE']
     
-    for label in labels:
+    for label in label_list:
         for pn in pos_neg:
             
             # feature words for one label (dem/rep), one sentiment type (positive/negative)
