@@ -12,4 +12,6 @@ pip3 install -r requirements.txt
 
 #### In python
 info_extract.setupStanfordNLP()  
-nltk.download('wordnet')
+nltk.download('wordnet')  
+nltk.download('stopwords')  
+nltk.download('punkt')
