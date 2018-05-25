@@ -190,7 +190,6 @@ def featurize_sentiments(df, label_list, tok_text_col, sent_dict, lex, window):
         window: window of words to consider
     Output: featurized dataframe
     """   
-    # Featurize
     pos_neg = ['NEGATIVE', 'POSITIVE']
     
     for label in label_list:
@@ -241,7 +240,7 @@ def featurize_sentiments(df, label_list, tok_text_col, sent_dict, lex, window):
                 # create overall sentiment score for label, sentiment type
                 if overall_count != 0:
                     df.loc[i, label +'_'+ pn] = overall_avg / overall_count
-                
+
     df.fillna(0, inplace=True)
     
     return df

@@ -16,14 +16,15 @@ def featurize(df, label, test_size, proto_word_args=None, hashtag_args=None, top
     X_train, X_test, y_train, y_test = train_test_split(df_x, df_y, test_size=test_size, random_state=random_state)
     # add y back in for feature generation
     X_train[label] = y_train 
-
+    
     # intialize feature dfs 
     X_train_ft = pd.DataFrame()
     X_test_ft = pd.DataFrame()
 
-    # trained objects
+    # keep track of trained objects
     trained_objects = {}
 
+    orig_cols = list(df.columns)
     time_start = time.time()
 
     if proto_word_args:
@@ -54,6 +55,7 @@ def featurize(df, label, test_size, proto_word_args=None, hashtag_args=None, top
         X_train_ft = pd.merge(X_train_word_ft, X_train_ht_ft, on=hashtag_args['user_id'])
         X_test_ft = pd.merge(X_test_word_ft, X_test_ht_ft, on=hashtag_args['user_id'])
         
+        # print(X_train_ft.columns)
         t =  time.time()
         print("Took {} seconds to featurize proto words and hashtags".format(str(int(t - time_start))))
         time_start = t
@@ -82,7 +84,7 @@ def featurize(df, label, test_size, proto_word_args=None, hashtag_args=None, top
             # becomes feature df
             X_train_ft = X_train_topic_ft
             X_test_ft = X_test_topic_ft
-
+        # print(X_train_ft.columns)
         t =  time.time()
         print("Took {} seconds to featurize topics".format(str(int(t - time_start))))
         time_start = t
@@ -106,10 +108,19 @@ def featurize(df, label, test_size, proto_word_args=None, hashtag_args=None, top
             X_train_ft = X_train_sent_ft
             X_test_ft = X_test_sent_ft
 
+        # drop original columns
+        cols = orig_cols + ['tokenized_text', 'normalized_tokens', 'reduced_tokens']
+        X_train_ft = X_train_ft.drop(cols, axis=1)
+        cols.remove(label)
+        X_test_ft = X_test_sent_ft.drop(cols, axis=1)
+
         t =  time.time()
         print("Took {} seconds to featurize sentiment words".format(str(int(t - time_start))))
         time_start = t
+        # print(X_train_ft.columns)
+        print(X_test_ft.columns)
+    # drop cols missing in test set
+    test_missing_cols = [col for col in X_train_ft.columns if col not in X_test_ft.columns]
+    X_train_ft = X_train_ft.drop(test_missing_cols, axis=1)
 
-    X_train_ft = X_train_ft.drop(label, axis=1)
-    
     return X_train_ft, X_test_ft, y_train, y_test, trained_objects
