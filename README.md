@@ -11,7 +11,5 @@ sudo apt-get install openjdk-8-jdk
 pip3 install -r requirements.txt  
 
 #### In python
-import info_extract #in data_preprocessing folder  
 info_extract.setupStanfordNLP()  
-import nltk  
 nltk.download('wordnet')
