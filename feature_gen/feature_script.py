@@ -42,7 +42,7 @@ hashtag_args_2 = {
     'top_k': 100,
     'ht_count_thresh': 3 
 }
-df = df.sample(100)
+
 X_train_ft, X_test_ft, y_train, y_test, obj = feature.featurize(df, 'label', 'user_id', 0.3, proto_word_args=proto_word_args_1, hashtag_args=hashtag_args_1, topic_model_args=None, topic_model_params=None, sent_args=None)
 
 X_train_ft.to_pickle('./proto_small/X_train_ft.pkl')
@@ -50,7 +50,7 @@ X_test_ft.to_pickle('./proto_small/X_test_ft.pkl')
 y_train.to_pickle('./proto_small/y_train.pkl')
 y_test.to_pickle('./proto_small/y_test.pkl')
 pickle.dump(obj, open('./proto_small/obj.pkl', 'wb'))
-'''
+
 X_train_ft, X_test_ft, y_train, y_test, obj = feature.featurize(df, 'label', 'user_id', 0.3, proto_word_args=proto_word_args_2, hashtag_args=hashtag_args_2, topic_model_args=None, topic_model_params=None, sent_args=None)
 
 X_train_ft.to_pickle('./proto_large/X_train_ft.pkl')
@@ -133,4 +133,4 @@ X_test_ft.to_pickle('./sentim_large/X_test_ft.pkl')
 y_train.to_pickle('./sentim_large/y_train.pkl')
 y_test.to_pickle('./sentim_large/y_test.pkl')
 pickle.dump(obj, open('./sentim_large/obj.pkl', 'wb'))
-'''
+
