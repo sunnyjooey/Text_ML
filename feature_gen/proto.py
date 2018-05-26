@@ -216,9 +216,6 @@ def create_protoword_features(df, proto_word_obj, text_col, user_id, tok_type, i
         each protoword in each class is a feature and the score is the value        
         join with original df using user_id as key
     """
-    orig_col = list(df.columns)
-    orig_col.remove(user_id)
-    
     # fit on parameters
     class_k_word_dict = proto_word_obj.top_k(k, thresh)
     
@@ -227,10 +224,10 @@ def create_protoword_features(df, proto_word_obj, text_col, user_id, tok_type, i
     else: # default is super clean
         tknzr = nltk.tokenize.TweetTokenizer(preserve_case=False, strip_handles=True, reduce_len=True)
     
-    # create features per user
-    indices = df.index
-    for i in indices:
-        words = tknzr.tokenize(df.loc[i, text_col])   
+    # create feature dataframe
+    feature_df = pd.DataFrame()
+    for user in df[user_id]:
+        words = tknzr.tokenize(df[df[user_id] == user][text_col].iloc[0])   
         for label_key in class_k_word_dict.keys():
             sum_num = 0 
             # word_key_pair is a tuple like ('emergency', 0.42)
@@ -246,17 +243,18 @@ def create_protoword_features(df, proto_word_obj, text_col, user_id, tok_type, i
                     denom = len(words)                
                 # score for proto-word feature
                 try:
-                    df.loc[i, word_key_pair[0]] = num/denom
+                    feature_df.loc[user, word_key_pair[0]] = num/denom
                 except:
-                    df.loc[i, word_key_pair[0]] = 0
+                    feature_df.loc[user, word_key_pair[0]] = 0
             # score for general label proto-words feature
             try:        
-                df.loc[i, 'PROTO_WORD_SCORE_' + label_key] = sum_num/denom
+                feature_df.loc[user, 'PROTO_WORD_SCORE_' + label_key] = sum_num/denom
             except:
-                df.loc[i, 'PROTO_WORD_SCORE_' + label_key] = 0
+                feature_df.loc[user, 'PROTO_WORD_SCORE_' + label_key] = 0
 
-    df = df.drop(orig_col, axis=1)
-    return df
+    feature_df.reset_index(inplace=True)
+    feature_df.rename(columns={'index': 'user_id'}, inplace=True)
+    return feature_df
 
 
 def create_protohashtag_features(df, proto_hash_obj, ht_col, user_id, k, thresh):
@@ -271,16 +269,13 @@ def create_protohashtag_features(df, proto_hash_obj, ht_col, user_id, k, thresh)
         each protohashtag in each class is a feature and the score is the value        
         join with original df using user_id as key
     """
-    orig_col = list(df.columns)
-    orig_col.remove(user_id)
-
     # fit on parameters
     class_k_ht_dict = proto_hash_obj.top_k(k, thresh)
     
-    # create features per user
-    indices = df.index
-    for i in indices:
-        hashtag_lst = df.loc[i, ht_col]
+    # create features dataframe
+    feature_df = pd.DataFrame()
+    for user in df[user_id]:
+        hashtag_lst = df[df[user_id] == user][ht_col].iloc[0]
         hashtag_lst = [ht.lower() for ht in hashtag_lst] # work with lowercase only
         for label_key in class_k_ht_dict.keys():
             sum_num = 0 
@@ -295,15 +290,16 @@ def create_protohashtag_features(df, proto_hash_obj, ht_col, user_id, k, thresh)
                 
                 # score for proto-hashtag feature
                 try:
-                    df.loc[i, word_key_pair[0]] = num/denom       
+                    feature_df.loc[user, word_key_pair[0]] = num/denom       
                 except:
-                    df.loc[i, word_key_pair[0]] = 0
+                    feature_df.loc[user, word_key_pair[0]] = 0
             # score for general label proto-hashtag feature
             try:
-                df.loc[i, 'PROTO_HT_SCORE_' + label_key] = sum_num/denom
+                feature_df.loc[user, 'PROTO_HT_SCORE_' + label_key] = sum_num/denom
             except:
-                df.loc[i, 'PROTO_HT_SCORE_' + label_key] = 0
+                feature_df.loc[user, 'PROTO_HT_SCORE_' + label_key] = 0
                     
-    df = df.drop(orig_col, axis=1)
-    return df
+    feature_df.reset_index(inplace=True)
+    feature_df.rename(columns={'index': 'user_id'}, inplace=True)
+    return feature_df
 

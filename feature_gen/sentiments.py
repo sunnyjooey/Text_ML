@@ -178,7 +178,7 @@ def most_pos_neg_sents(df, label_col, lex, window, count_thresh, k):
     return sent_dict
 
 
-def featurize_sentiments(df, label_list, tok_text_col, sent_dict, lex, window):
+def featurize_sentiments(df, label_list, user_id, tok_text_col, sent_dict, lex, window):
     """
     Featurize most positive/negative subject/object words in each label
     Value is the average sentiment of the `window` number of words before
@@ -192,14 +192,16 @@ def featurize_sentiments(df, label_list, tok_text_col, sent_dict, lex, window):
     """   
     pos_neg = ['NEGATIVE', 'POSITIVE']
     
+    # create feature dataframe
+    feature_df = pd.DataFrame()
+
     for label in label_list:
         for pn in pos_neg:
             
             # feature words for one label (dem/rep), one sentiment type (positive/negative)
             sent_features = sent_dict[label][pn]
-            indices = df.index
-            for i in indices:
-                tokenized_text_lists = df.loc[i,tok_text_col]
+            for user in df[user_id]:
+                tokenized_text_lists = df[df[user_id] == user][tok_text_col]
                 i_sent_dict = {}
                 for tokenized_text in tokenized_text_lists:
                     for sent in sent_features:
@@ -234,13 +236,16 @@ def featurize_sentiments(df, label_list, tok_text_col, sent_dict, lex, window):
                 overall_avg = 0
                 overall_count = 0
                 for sent_key in i_sent_dict.keys():
-                    df.loc[i, sent_key] = i_sent_dict[sent_key]['avg'] / i_sent_dict[sent_key]['count']
+                    feature_df.loc[user, sent_key] = i_sent_dict[sent_key]['avg'] / i_sent_dict[sent_key]['count']
                     overall_avg += i_sent_dict[sent_key]['avg']
                     overall_count += i_sent_dict[sent_key]['count']
                 # create overall sentiment score for label, sentiment type
                 if overall_count != 0:
-                    df.loc[i, label +'_'+ pn] = overall_avg / overall_count
+                    feature_df.loc[user, label +'_'+ pn] = overall_avg / overall_count
+                else:
+                    feature_df.loc[user, label +'_'+ pn] = 0
 
-    df.fillna(0, inplace=True)
+    feature_df.reset_index(inplace=True)
+    feature_df.rename(columns={'index': user_id}, inplace=True)
     
-    return df
+    return feature_df

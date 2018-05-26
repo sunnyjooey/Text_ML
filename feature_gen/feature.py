@@ -10,6 +10,9 @@ def featurize(df, label, user_id, test_size, proto_word_args=None, hashtag_args=
     """
     Featurize the dataframe
     """
+    # insurance
+    df = df.drop_duplicates(subset=[user_id], keep='first')
+
     # train test split
     df_x = df.drop(label, axis=1)
     df_y = df[label]
@@ -95,8 +98,8 @@ def featurize(df, label, user_id, test_size, proto_word_args=None, hashtag_args=
         # create sentiment features
         label_list = df_y.unique()
         sent_dict = sentiments.most_pos_neg_sents(X_train, label, sent_args['lexicon'], sent_args['window'], sent_args['count_thresh'], sent_args['top_k'])
-        X_train_sent_ft = sentiments.featurize_sentiments(X_train, label_list, sent_args['tok_text_col'], sent_dict, sent_args['lexicon'], sent_args['window'])
-        X_test_sent_ft = sentiments.featurize_sentiments(X_test, label_list, sent_args['tok_text_col'], sent_dict, sent_args['lexicon'], sent_args['window'])
+        X_train_sent_ft = sentiments.featurize_sentiments(X_train, label_list, user_id, sent_args['tok_text_col'], sent_dict, sent_args['lexicon'], sent_args['window'])
+        X_test_sent_ft = sentiments.featurize_sentiments(X_test, label_list, user_id, sent_args['tok_text_col'], sent_dict, sent_args['lexicon'], sent_args['window'])
 
         trained_objects['sent_dict'] = sent_dict
 
@@ -110,9 +113,9 @@ def featurize(df, label, user_id, test_size, proto_word_args=None, hashtag_args=
             X_test_ft = X_test_sent_ft
         
         # drop original columns
-        X_train_ft = X_train_ft.drop(orig_cols, axis=1)
-        orig_cols.remove(label)
-        X_test_ft = X_test_ft.drop(orig_cols, axis=1)
+        #X_train_ft = X_train_ft.drop(orig_cols, axis=1)
+        #orig_cols.remove(label)
+        #X_test_ft = X_test_ft.drop(orig_cols, axis=1)
         
         t =  time.time()
         print("Took {} seconds to featurize sentiment words".format(str(int(t - time_start))))
