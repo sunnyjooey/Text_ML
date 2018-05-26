@@ -201,7 +201,7 @@ def featurize_sentiments(df, label_list, user_id, tok_text_col, sent_dict, lex, 
             # feature words for one label (dem/rep), one sentiment type (positive/negative)
             sent_features = sent_dict[label][pn]
             for user in df[user_id]:
-                tokenized_text_lists = df[df[user_id] == user][tok_text_col]
+                tokenized_text_lists = df[df[user_id] == user][tok_text_col].iloc[0]
                 i_sent_dict = {}
                 for tokenized_text in tokenized_text_lists:
                     for sent in sent_features:
@@ -247,5 +247,5 @@ def featurize_sentiments(df, label_list, user_id, tok_text_col, sent_dict, lex, 
 
     feature_df.reset_index(inplace=True)
     feature_df.rename(columns={'index': user_id}, inplace=True)
-    
+    feature_df.fillna(0, inplace=True)
     return feature_df
