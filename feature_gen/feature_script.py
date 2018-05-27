@@ -1,3 +1,5 @@
+# For running feature groups separately
+
 import pandas as pd
 import nltk
 import pickle
