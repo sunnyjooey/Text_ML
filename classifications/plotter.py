@@ -1,10 +1,44 @@
-# Modified from: github.com/Computational-Content-Analysis-2018/lucem_illud.git
+# Reference: github.com/Computational-Content-Analysis-2018/lucem_illud.git
+# Reference: http://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn
 from sklearn import metrics
+
+
+def visualize_features(cols, forest, n):
+    """
+    Visualize the most important features
+    Inputs: already fit classifier `forest`, top `n` features
+    """
+    # Get important features
+    importances = forest.feature_importances_
+    std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
+    ind = np.argsort(importances)[::-1]
+    indices = ind[:n]
+    
+    xlab = []
+    # Print the feature ranking
+    print("Feature ranking:")
+    for f in range(n):
+        print("%d. feature %s (%f)" % (f + 1, cols[indices[f]], importances[indices[f]]))
+        xlab.append(cols[indices[f]])
+        
+    c = ['orangered','darkorange']
+    if n % 2 == 0:
+        colors = c * int(n/2)
+    else:
+        colors = (c * int((n+1)/2))[:n]
+    # Plot the feature importances of the forest
+    plt.figure()
+    plt.title("Feature importances")
+    plt.bar(range(n), importances[indices],
+           color=colors, yerr=std[indices], align="center")
+    plt.xticks(range(n), xlab, rotation='vertical')
+    plt.xlim([-1, n])
+    plt.show()
 
 
 def plotConfusionMatrix(clf, predictions, y_test):
