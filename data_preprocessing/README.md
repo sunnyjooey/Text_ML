@@ -1,6 +1,6 @@
 ### Preparation 
 Run in python to download all necessary files:  
->>> info_extract.setupStanfordNLP()  
+info_extract.setupStanfordNLP()  
 
 ### Files
 info_extract.py, stanford.py: downloads necessary files for text processing  
